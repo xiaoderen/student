@@ -28,7 +28,7 @@ public class User {
     private LocalDateTime createTime;
 
     public enum Role {
-        TEACHER, ADMIN
+        STUDENT, TEACHER, ADMIN
     }
 
     public User() {}
