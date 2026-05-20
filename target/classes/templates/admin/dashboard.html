@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理面板 - 考勤系统</title>
+    <link href="/webjars/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 20px;
+        }
+        .dashboard-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .welcome-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .action-btn {
+            font-size: 18px;
+            padding: 15px 30px;
+            margin: 10px;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard-container">
+    <div class="welcome-card text-center">
+        <h1>‍💼 考勤系统管理面板</h1>
+        <p class="mb-0">欢迎，<span th:text="${user.realName}"></span> (<span th:text="${user.role}"></span>)</p>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">学生管理</h4>
+        </div>
+        <div class="card-body text-center">
+            <a th:href="@{/admin/students/add}" class="btn btn-success action-btn">
+                ➕ 新增学生
+            </a>
+            <a th:href="@{/admin/students}" class="btn btn-primary action-btn">
+                📋 浏览学生信息
+            </a>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <a th:href="@{/logout}" class="btn btn-outline-danger">退出登录</a>
+    </div>
+</div>
+
+<script src="/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

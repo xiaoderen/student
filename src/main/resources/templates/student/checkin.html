@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生考勤打卡</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #2d3436;
+            font-size: 24px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            background: #d63031;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            color: #2d3436;
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #636e72;
+            font-weight: 500;
+        }
+
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #dfe6e9;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .seat-selector {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .seat {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #dfe6e9;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .seat:hover:not(.occupied):not(.selected) {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+
+        .seat.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .seat.occupied {
+            background: #dfe6e9;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .checkin-btn, .filter-btn, .export-btn, .debug-btn {
+            width: 100%;
+            padding: 12px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .checkin-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .debug-btn {
+            background: linear-gradient(135deg, #fdcb6e 0%, #f39c12 100%);
+        }
+
+        .checkin-btn:hover, .filter-btn:hover, .export-btn:hover, .debug-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .checkin-btn:disabled {
+            background: #b2bec3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+            margin-top: 20px;
+        }
+
+        .course-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .course-info p {
+            margin: 5px 0;
+            color: #636e72;
+            font-size: 14px;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .attendance-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .attendance-item {
+            padding: 15px;
+            border: 1px solid #dfe6e9;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-normal {
+            background: #00b894;
+            color: white;
+        }
+
+        .status-late {
+            background: #fdcb6e;
+            color: #2d3436;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 10px;
+            align-items: end;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .page-btn {
+            padding: 8px 16px;
+            border: 1px solid #dfe6e9;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+            .filter-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1> 学生考勤打卡系统</h1>
+        <div class="user-info">
+            <span th:text="${currentUser != null ? '欢迎，' + currentUser.realName : '未登录'}"></span>
+            <a href="/logout" class="logout-btn">退出登录</a>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('checkin')">考勤打卡</button>
+        <button class="tab-btn" onclick="switchTab('records')">打卡记录</button>
+    </div>
+
+    <div id="checkin-tab" class="tab-content active">
+        <div class="card">
+            <h2> 考勤打卡</h2>
+            <div id="message" class="message"></div>
+
+            <div class="form-group">
+                <label for="weekdaySelect">选择星期</label>
+                <select id="weekdaySelect">
+                    <option value="">请选择星期</option>
+                    <option value="1">周一</option>
+                    <option value="2">周二</option>
+                    <option value="3">周三</option>
+                    <option value="4">周四</option>
+                    <option value="5">周五</option>
+                    <option value="6">周六</option>
+                    <option value="7">周日</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="courseSelect">选择课程</label>
+                <select id="courseSelect" disabled>
+                    <option value="">请先选择星期</option>
+                </select>
+            </div>
+
+            <div id="courseInfo" class="course-info" style="display: none;">
+                <p><strong>课程名称：</strong><span id="courseName"></span></p>
+                <p><strong>上课时间：</strong><span id="courseTime"></span></p>
+                <p><strong>教室：</strong><span id="classroom"></span></p>
+                <p style="color: #e17055; font-size: 12px; margin-top: 10px;">
+                    打卡时间：开课前 15 分钟 ~ 开课后 30 分钟
+                </p>
+            </div>
+
+            <div class="form-group">
+                <label>选择座位</label>
+                <div id="seatSelector" class="seat-selector"></div>
+                <p style="margin-top: 10px; color: #636e72; font-size: 13px;">
+                    已选座位：<span id="selectedSeat">未选择</span>
+                </p>
+            </div>
+
+            <button id="checkinBtn" class="checkin-btn" onclick="checkIn()" disabled>
+                立即打卡
+            </button>
+
+            <button class="debug-btn" onclick="testDebug()">
+                🔍 测试调试（点击查看课程数据）
+            </button>
+        </div>
+    </div>
+
+    <div id="records-tab" class="tab-content">
+        <div class="card">
+            <h2> 打卡记录</h2>
+
+            <div class="filter-row">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>开始日期</label>
+                    <input type="date" id="startDate">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>结束日期</label>
+                    <input type="date" id="endDate">
+                </div>
+                <button class="filter-btn" onclick="loadRecords()" style="height: 42px;">
+                    查询
+                </button>
+            </div>
+
+            <button class="export-btn" onclick="exportRecords()">
+                导出 Excel
+            </button>
+
+            <div id="recordsList" class="attendance-list" style="margin-top: 20px;">
+                <p style="color: #636e72; text-align: center; padding: 20px;">请选择日期范围查询</p>
+            </div>
+
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selectedSeat = null;
+    let currentPage = 0;
+    let totalPages = 0;
+    let allCourses = [];
+
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+        event.target.classList.add('active');
+        document.getElementById(tab + '-tab').classList.add('active');
+
+        if (tab === 'records') {
+            loadRecords();
+        }
+    }
+
+    function loadAvailableCourses() {
+        console.log('开始加载课程...');
+        fetch(window.location.origin + '/attendance/available-courses')
+            .then(response => response.json())
+            .then(data => {
+                console.log('后端返回的数据:', data);
+
+                if (data.code === 200 && data.data) {
+                    allCourses = data.data;
+                    console.log('课程数量:', allCourses.length);
+                    console.log('课程详情:', allCourses);
+                    filterCoursesByWeekday();
+                } else {
+                    console.error('获取课程失败:', data.message || data.msg);
+                    allCourses = [];
+                    filterCoursesByWeekday();
+                }
+            })
+            .catch(error => {
+                console.error('加载课程失败:', error);
+                showMessage('加载课程失败', 'error');
+            });
+    }
+
+    function filterCoursesByWeekday() {
+        const weekdaySelect = document.getElementById('weekdaySelect');
+        const courseSelect = document.getElementById('courseSelect');
+        const selectedWeekday = weekdaySelect.value;
+
+        courseSelect.innerHTML = '';
+
+        if (!selectedWeekday) {
+            courseSelect.innerHTML = '<option value="">请先选择星期</option>';
+            courseSelect.disabled = true;
+            return;
+        }
+
+        const filteredCourses = allCourses.filter(course => course.weekday == selectedWeekday);
+        console.log('选择星期:', selectedWeekday, '筛选后课程数:', filteredCourses.length);
+
+        if (filteredCourses.length > 0) {
+            courseSelect.disabled = false;
+            courseSelect.innerHTML = '<option value="">请选择课程</option>';
+
+            filteredCourses.forEach(course => {
+                const weekdayNames = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+                const weekday = weekdayNames[course.weekday] || '';
+                const startTime = course.startTime ? course.startTime.substring(0, 5) : '';
+                const endTime = course.endTime ? course.endTime.substring(0, 5) : '';
+
+                const option = document.createElement('option');
+                option.value = course.courseId;
+                option.textContent = `${course.courseName} - ${weekday} ${startTime}-${endTime}`;
+                option.dataset.course = JSON.stringify(course);
+                courseSelect.appendChild(option);
+            });
+        } else {
+            courseSelect.innerHTML = '<option value="">该天没有可打卡的课程</option>';
+            courseSelect.disabled = true;
+        }
+    }
+
+    document.getElementById('weekdaySelect').addEventListener('change', function() {
+        filterCoursesByWeekday();
+        document.getElementById('courseInfo').style.display = 'none';
+        document.getElementById('seatSelector').innerHTML = '';
+        document.getElementById('checkinBtn').disabled = true;
+        selectedSeat = null;
+        document.getElementById('selectedSeat').textContent = '未选择';
+    });
+
+    document.getElementById('courseSelect').addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        if (selectedOption.dataset.course) {
+            const course = JSON.parse(selectedOption.dataset.course);
+            const courseInfoDiv = document.getElementById('courseInfo');
+
+            const weekdayNames = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+            const weekday = weekdayNames[course.weekday] || '';
+            const startTime = course.startTime ? course.startTime.substring(0, 5) : '';
+            const endTime = course.endTime ? course.endTime.substring(0, 5) : '';
+
+            document.getElementById('courseName').textContent = course.courseName;
+            document.getElementById('courseTime').textContent = `${weekday} ${startTime}-${endTime}`;
+            document.getElementById('classroom').textContent = course.classroomName || '待定';
+            courseInfoDiv.style.display = 'block';
+
+            const rows = course.seatRows || 6;
+            const cols = course.seatCols || 8;
+            const exclude = course.excludeSeats || '';
+
+            generateSeatGrid(rows, cols, exclude);
+            checkIfAlreadyCheckedIn(course.courseId);
+        } else {
+            document.getElementById('courseInfo').style.display = 'none';
+            document.getElementById('seatSelector').innerHTML = '';
+            document.getElementById('checkinBtn').disabled = true;
+        }
+    });
+
+    function generateSeatGrid(rows, cols, excludeSeats) {
+        const selector = document.getElementById('seatSelector');
+        selector.innerHTML = '';
+        selectedSeat = null;
+        document.getElementById('selectedSeat').textContent = '未选择';
+        document.getElementById('checkinBtn').disabled = true;
+
+        const excludeList = excludeSeats ? excludeSeats.split(';').map(s => s.trim()) : [];
+
+        for (let row = 1; row <= rows; row++) {
+            for (let col = 1; col <= cols; col++) {
+                const seat = document.createElement('div');
+                seat.className = 'seat';
+                seat.textContent = `${row}-${col}`;
+
+                if (excludeList.includes(`${row},${col}`)) {
+                    seat.classList.add('occupied');
+                } else {
+                    seat.onclick = () => selectSeat(row, col, seat);
+                }
+
+                selector.appendChild(seat);
+            }
+        }
+    }
+
+    function selectSeat(row, col, element) {
+        document.querySelectorAll('.seat.selected').forEach(s => s.classList.remove('selected'));
+        element.classList.add('selected');
+        selectedSeat = { row, col };
+        document.getElementById('selectedSeat').textContent = `${row}排${col}座`;
+        document.getElementById('checkinBtn').disabled = false;
+    }
+
+    function checkIfAlreadyCheckedIn(courseId) {
+        fetch(window.location.origin + '/attendance/checked-today/' + courseId)
+            .then(response => response.json())
+            .then(data => {
+                if (data.code === 200 && data.data) {
+                    showMessage('今天已经打过卡了', 'error');
+                    document.getElementById('checkinBtn').disabled = true;
+                }
+            })
+            .catch(error => console.error('检查打卡状态失败:', error));
+    }
+
+    function checkIn() {
+        const courseId = document.getElementById('courseSelect').value;
+
+        if (!selectedSeat) {
+            showMessage('请选择座位', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('checkinBtn');
+        btn.disabled = true;
+        btn.textContent = '打卡中...';
+
+        fetch(window.location.origin + '/attendance/checkin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                courseId: courseId,
+                seatRow: selectedSeat.row,
+                seatCol: selectedSeat.col
+            })
+        })
+            .then(response => {
+                console.log('响应状态:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('打卡返回数据:', data);
+                if (data.code === 200) {
+                    const statusText = data.data.status === 'NORMAL' ? '✅ 正常' : '⚠️ 迟到';
+                    showMessage(`打卡成功！状态：${statusText}`, 'success');
+                    btn.textContent = '已打卡';
+                    loadAvailableCourses();
+                } else {
+                    const errorMsg = data.msg || data.message || '打卡失败';
+                    showMessage(errorMsg, 'error');
+                    console.error('打卡失败原因:', errorMsg);
+                    btn.disabled = false;
+                    btn.textContent = '立即打卡';
+                }
+            })
+            .catch(error => {
+                console.error('网络错误:', error);
+                showMessage('网络错误，请查看控制台', 'error');
+                btn.disabled = false;
+                btn.textContent = '立即打卡';
+            });
+    }
+
+    function showMessage(msg, type) {
+        const messageDiv = document.getElementById('message');
+        messageDiv.textContent = msg;
+        messageDiv.className = `message ${type}`;
+        messageDiv.style.display = 'block';
+        setTimeout(() => { messageDiv.style.display = 'none'; }, 3000);
+    }
+
+    function loadRecords(page = 0) {
+        currentPage = page;
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+
+        let url = window.location.origin + `/attendance/records?page=${page}&size=10`;
+        if (startDate && endDate) {
+            url += `&startDate=${startDate}&endDate=${endDate}`;
+        }
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.code === 200 && data.data) {
+                    displayRecords(data.data.content);
+                    totalPages = data.data.totalPages;
+                    displayPagination();
+                }
+            })
+            .catch(error => console.error('加载记录失败:', error));
+    }
+
+    function displayRecords(records) {
+        const listDiv = document.getElementById('recordsList');
+
+        if (records && records.length > 0) {
+            listDiv.innerHTML = records.map(item => `
+                <div class="attendance-item">
+                    <div>
+                        <h4>${item.courseId}</h4>
+                        <p style="color: #636e72; font-size: 13px;">
+                            ${formatDateTime(item.checkInTime)} | ${item.seatRow}排${item.seatCol}座
+                        </p>
+                    </div>
+                    <span class="status-badge status-${item.status.toLowerCase()}">
+                        ${item.status === 'NORMAL' ? '✅ 正常' : '⚠️ 迟到'}
+                    </span>
+                </div>
+            `).join('');
+        } else {
+            listDiv.innerHTML = '<p style="color: #636e72; text-align: center; padding: 20px;">暂无打卡记录</p>';
+        }
+    }
+
+    function displayPagination() {
+        const paginationDiv = document.getElementById('pagination');
+        if (totalPages <= 1) {
+            paginationDiv.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+        html += `<button class="page-btn" onclick="loadRecords(${currentPage - 1})" ${currentPage === 0 ? 'disabled' : ''}>上一页</button>`;
+        html += `<span style="padding: 8px;">第 ${currentPage + 1} / ${totalPages} 页</span>`;
+        html += `<button class="page-btn" onclick="loadRecords(${currentPage + 1})" ${currentPage === totalPages - 1 ? 'disabled' : ''}>下一页</button>`;
+        paginationDiv.innerHTML = html;
+    }
+
+    function exportRecords() {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+
+        let url = window.location.origin + '/attendance/export';
+        if (startDate && endDate) {
+            url += `?startDate=${startDate}&endDate=${endDate}`;
+        }
+
+        window.open(url, '_blank');
+    }
+
+    function formatDateTime(dateTimeStr) {
+        if (!dateTimeStr) return '';
+        const date = new Date(dateTimeStr);
+        return date.toLocaleString('zh-CN');
+    }
+
+    function testDebug() {
+        console.log('=== 开始调试 ===');
+
+        fetch(window.location.origin + '/attendance/available-courses')
+            .then(response => {
+                console.log('响应状态:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('完整响应数据:', JSON.stringify(data, null, 2));
+
+                if (data.code === 200 && data.data) {
+                    console.log('课程数量:', data.data.length);
+                    data.data.forEach((course, index) => {
+                        console.log(`课程${index + 1}:`, {
+                            courseId: course.courseId,
+                            courseName: course.courseName,
+                            weekday: course.weekday,
+                            startTime: course.startTime,
+                            endTime: course.endTime
+                        });
+                    });
+
+                    alert(`成功获取 ${data.data.length} 门课程！\n详情请查看控制台`);
+                } else {
+                    console.error('错误信息:', data.message || data.msg);
+                    alert('获取课程失败: ' + (data.message || data.msg || '未知错误'));
+                }
+            })
+            .catch(error => {
+                console.error('请求失败:', error);
+                alert('请求失败，请查看控制台');
+            });
+    }
+
+    window.onload = function() {
+        console.log('页面加载完成');
+        loadAvailableCourses();
+    };
+</script>
+</body>
+</html>

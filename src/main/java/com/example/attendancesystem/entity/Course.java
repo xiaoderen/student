@@ -2,6 +2,7 @@ package com.example.attendancesystem.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "course")
@@ -41,6 +42,15 @@ public class Course {
     @Column(name = "end_week")
     private Integer endWeek;
 
+    @Column(name = "start_time")
+    private LocalTime startTime;
+
+    @Column(name = "end_time")
+    private LocalTime endTime;
+
+    @Column(name = "section")
+    private Integer section;
+
     @Column(name = "create_time")
     private LocalDateTime createTime;
 
@@ -68,6 +78,12 @@ public class Course {
     public void setStartWeek(Integer startWeek) { this.startWeek = startWeek; }
     public Integer getEndWeek() { return endWeek; }
     public void setEndWeek(Integer endWeek) { this.endWeek = endWeek; }
+    public LocalTime getStartTime() { return startTime; }
+    public void setStartTime(LocalTime startTime) { this.startTime = startTime; }
+    public LocalTime getEndTime() { return endTime; }
+    public void setEndTime(LocalTime endTime) { this.endTime = endTime; }
+    public Integer getSection() { return section; }
+    public void setSection(Integer section) { this.section = section; }
     public LocalDateTime getCreateTime() { return createTime; }
     public void setCreateTime(LocalDateTime createTime) { this.createTime = createTime; }
 }

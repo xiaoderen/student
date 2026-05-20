@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -24,4 +25,10 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     Page<Attendance> findByStudentIdAndCourseId(String studentId, String courseId, Pageable pageable);
 
     Page<Attendance> findAll(Pageable pageable);
+
+    List<Attendance> findByStudentIdAndCheckInTimeBetween(String studentId, LocalDateTime startTime, LocalDateTime endTime);
+
+    boolean existsByStudentIdAndCourseIdAndCheckInTimeBetween(String studentId, String courseId, LocalDateTime startTime, LocalDateTime endTime);
+
+    Page<Attendance> findByStudentIdAndCheckInTimeBetween(String studentId, LocalDateTime startTime, LocalDateTime endTime, Pageable pageable);
 }

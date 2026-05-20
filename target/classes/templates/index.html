@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>考勤系统 - 欢迎</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 50px; }
+        h1 { color: #333; }
+        a { margin: 10px; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+        a:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+<h1>欢迎使用考勤系统</h1>
+<p>请选择以下操作：</p>
+<a th:href="@{/login}">登录</a>
+<a th:href="@{/register}">注册</a>
+<a th:href="@{/attendance/list}">查看考勤记录</a>
+<p th:if="${message}" th:text="${message}">默认消息</p>  <!-- 可选：显示动态消息 -->
+</body>
+</html>

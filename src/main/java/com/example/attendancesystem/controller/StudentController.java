@@ -29,4 +29,24 @@ public class StudentController {
     public Result<List<Student>> list() {
         return Result.success(studentService.getAllStudents());
     }
+
+    @PutMapping("/update")
+    public Result<String> update(@RequestBody Student student) {
+        try {
+            studentService.updateStudent(student);
+            return Result.success("学生信息更新成功");
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public Result<String> delete(@PathVariable Long id) {
+        try {
+            studentService.deleteStudent(id);
+            return Result.success("学生删除成功");
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
 }

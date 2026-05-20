@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生面板 - 考勤系统</title>
+    <link href="/webjars/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 20px;
+        }
+        .dashboard-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .welcome-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard-container">
+    <div class="welcome-card text-center">
+        <h1>🎓 学生考勤面板</h1>
+        <p class="mb-0">欢迎，<span th:text="${user.realName}"></span></p>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">我的考勤</h4>
+        </div>
+        <div class="card-body text-center">
+            <p>查看个人考勤记录</p>
+            <a th:href="@{/attendance/list}" class="btn btn-primary">查看考勤记录</a>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <a th:href="@{/logout}" class="btn btn-outline-danger">退出登录</a>
+    </div>
+</div>
+
+<script src="/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

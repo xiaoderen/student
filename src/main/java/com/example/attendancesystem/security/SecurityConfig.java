@@ -1,16 +1,24 @@
 package com.example.attendancesystem.security;
 
+import com.example.attendancesystem.entity.User;
 import com.example.attendancesystem.repository.UserRepository;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+
+import java.io.IOException;
 
 @Configuration
 @EnableWebSecurity
@@ -36,25 +44,57 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public AuthenticationSuccessHandler customAuthenticationSuccessHandler(UserRepository userRepository) {
+        return new AuthenticationSuccessHandler() {
+            @Override
+            public void onAuthenticationSuccess(HttpServletRequest request,
+                                                HttpServletResponse response,
+                                                Authentication authentication)
+                    throws IOException, ServletException {
+                String username = authentication.getName();
+                User user = userRepository.findByUsername(username)
+                        .orElseThrow(() -> new UsernameNotFoundException("用户不存在"));
+
+                HttpSession session = request.getSession();
+                session.setAttribute("currentUser", user);
+
+                if (user.getRole() == User.Role.TEACHER || user.getRole() == User.Role.ADMIN) {
+                    response.sendRedirect("/admin/dashboard");
+                } else if (user.getRole() == User.Role.STUDENT) {
+                    response.sendRedirect("/student/checkin");
+                } else {
+                    response.sendRedirect("/");
+                }
+            }
+        };
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http, AuthenticationSuccessHandler customAuthenticationSuccessHandler) throws Exception {
         http
-                // 禁用 CSRF（因为使用 Basic Authentication）
                 .csrf(csrf -> csrf.disable())
+                .httpBasic(httpBasic -> httpBasic.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // 注册接口无需认证
+                        .requestMatchers("/", "/index", "/login", "/register", "/css/**", "/js/**", "/images/**").permitAll()
                         .requestMatchers("/user/register").permitAll()
-                        // 学生相关接口：所有角色都可以访问
-                        .requestMatchers("/student/**").hasAnyRole("ADMIN", "TEACHER", "STUDENT")
-                        // 课程相关接口：管理员和教师可以访问
-                        .requestMatchers("/course/**").hasAnyRole("ADMIN", "TEACHER")
-                        // 考勤相关接口：管理员和教师可以访问
-                        .requestMatchers("/attendance/**").hasAnyRole("ADMIN", "TEACHER")
-                        // 其他请求需要认证
+                        .requestMatchers("/admin/**").hasAnyRole("ADMIN", "TEACHER")
+                        .requestMatchers("/student/**").hasRole("STUDENT")
                         .anyRequest().authenticated()
                 )
-                .httpBasic(basic -> basic.realmName("Attendance System"))
-                // 无状态会话
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .loginProcessingUrl("/login")
+                        .successHandler(customAuthenticationSuccessHandler)
+                        .failureUrl("/login?error=true")
+                        .permitAll()
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
+                        .permitAll()
+                );
 
         return http.build();
     }

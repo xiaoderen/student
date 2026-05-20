@@ -23,6 +23,9 @@ public class StudentServiceImpl implements StudentService {
         if (student.getStudentId() == null || student.getStudentId().isEmpty()) {
             throw new RuntimeException("学号不能为空");
         }
+        if (student.getClassName() == null || student.getClassName().isEmpty()) {
+            throw new RuntimeException("班级不能为空");
+        }
 
         if (studentRepository.existsByStudentId(student.getStudentId())) {
             throw new RuntimeException("学号已存在：" + student.getStudentId());
@@ -39,7 +42,35 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
+    public Student getStudentById(Long id) {
+        return studentRepository.findById(id).orElse(null);
+    }
+
+    @Override
     public List<Student> getAllStudents() {
         return studentRepository.findAll();
+    }
+
+    @Override
+    public void updateStudent(Student student) {
+        if (student.getId() == null) {
+            throw new RuntimeException("学生ID不能为空");
+        }
+        Student existingStudent = studentRepository.findById(student.getId())
+                .orElseThrow(() -> new RuntimeException("学生不存在"));
+
+        existingStudent.setStudentName(student.getStudentName());
+        existingStudent.setGender(student.getGender());
+        existingStudent.setClassName(student.getClassName());
+
+        studentRepository.save(existingStudent);
+    }
+
+    @Override
+    public void deleteStudent(Long id) {
+        if (!studentRepository.existsById(id)) {
+            throw new RuntimeException("学生不存在");
+        }
+        studentRepository.deleteById(id);
     }
 }

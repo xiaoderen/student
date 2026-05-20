@@ -1,6 +1,8 @@
- package com.example.attendancesystem.service.impl;
+package com.example.attendancesystem.service.impl;
 
+import com.example.attendancesystem.entity.Student;
 import com.example.attendancesystem.entity.User;
+import com.example.attendancesystem.repository.StudentRepository;
 import com.example.attendancesystem.repository.UserRepository;
 import com.example.attendancesystem.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,9 @@ public class UserServiceimpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private StudentRepository studentRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -30,10 +35,20 @@ public class UserServiceimpl implements UserService {
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-
         user.setCreateTime(LocalDateTime.now());
-
         userRepository.save(user);
+
+        if (user.getRole() == User.Role.STUDENT) {
+            if (!studentRepository.existsByStudentId(user.getUsername())) {
+                Student student = new Student();
+                student.setStudentId(user.getUsername());
+                student.setStudentName(user.getRealName());
+                student.setClassName("待分配");
+                student.setCreateTime(LocalDateTime.now());
+                studentRepository.save(student);
+            }
+        }
+
         return "注册成功";
     }
 
