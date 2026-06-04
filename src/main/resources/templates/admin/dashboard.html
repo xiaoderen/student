@@ -11,7 +11,7 @@
             padding-top: 20px;
         }
         .dashboard-container {
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -33,25 +33,55 @@
             transform: translateY(-3px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
+        .role-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .role-admin {
+            background-color: #ff6b6b;
+        }
+        .role-teacher {
+            background-color: #4ecdc4;
+        }
     </style>
 </head>
 <body>
 <div class="dashboard-container">
     <div class="welcome-card text-center">
         <h1>‍💼 考勤系统管理面板</h1>
-        <p class="mb-0">欢迎，<span th:text="${user.realName}"></span> (<span th:text="${user.role}"></span>)</p>
+        <p class="mb-0">
+            欢迎，<span th:text="${user.realName}"></span>
+            <span class="role-badge"
+                  th:classappend="${user.role.name() == 'ADMIN'} ? 'role-admin' : 'role-teacher'"
+                  th:text="${user.role.name() == 'ADMIN'} ? '管理员' : '教师'"></span>
+        </p>
     </div>
 
-    <div class="card">
-        <div class="card-header">
-            <h4 class="mb-0">学生管理</h4>
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">👨‍🎓 学生信息管理</h4>
         </div>
         <div class="card-body text-center">
             <a th:href="@{/admin/students/add}" class="btn btn-success action-btn">
                 ➕ 新增学生
             </a>
             <a th:href="@{/admin/students}" class="btn btn-primary action-btn">
-                📋 浏览学生信息
+                📋 学生列表
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h4 class="mb-0">📚 选课管理</h4>
+        </div>
+        <div class="card-body text-center">
+            <a th:href="@{/admin/course-selections}" class="btn btn-success action-btn">
+                📤 批量导入选课
             </a>
         </div>
     </div>
