@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>选课管理 - 考勤系统</title>
+    <link href="/webjars/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 20px;
+        }
+        .container {
+            max-width: 1200px;
+        }
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .progress-container {
+            display: none;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📚 选课管理</h2>
+        <div>
+            <a th:href="@{/admin/dashboard}" class="btn btn-secondary">返回面板</a>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#importModal">📤 批量导入选课</button>
+        </div>
+    </div>
+
+    <div class="alert alert-info">
+        <strong>说明：</strong><br>
+        1. 本功能用于批量导入学生选课信息<br>
+        2. Excel格式：第一行为表头，从第二行开始为数据<br>
+        3. 列顺序：学号、课程号<br>
+        4. 单个文件大小不超过10MB
+    </div>
+
+    <div class="modal fade" id="importModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">批量导入选课</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <strong>Excel格式示例：</strong><br>
+                        学号 | 课程号<br>
+                        2024001 | CS101<br>
+                        2024002 | CS101<br>
+                        2024001 | CS102
+                    </div>
+                    <form id="importForm" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="excelFile" class="form-label">选择Excel文件</label>
+                            <input type="file" class="form-control" id="excelFile" name="file" accept=".xlsx,.xls" required>
+                        </div>
+                        <div class="progress-container" id="progressContainer">
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                     role="progressbar"
+                                     id="progressBar"
+                                     style="width: 0%">0%</div>
+                            </div>
+                            <small class="text-muted mt-1" id="progressText">上传中...</small>
+                        </div>
+                        <div id="importResult" class="mt-3"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="uploadFile()">开始导入</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script>
+    function uploadFile() {
+        const fileInput = document.getElementById('excelFile');
+        const file = fileInput.files[0];
+
+        if (!file) {
+            alert('请选择文件');
+            return;
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+            alert('文件大小不能超过10MB');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const xhr = new XMLHttpRequest();
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const importResult = document.getElementById('importResult');
+
+        progressContainer.style.display = 'block';
+        importResult.innerHTML = '';
+
+        xhr.upload.addEventListener('progress', function(e) {
+            if (e.lengthComputable) {
+                const percentComplete = Math.round((e.loaded / e.total) * 100);
+                progressBar.style.width = percentComplete + '%';
+                progressBar.textContent = percentComplete + '%';
+                progressText.textContent = '上传中...';
+            }
+        });
+
+        xhr.addEventListener('load', function() {
+            if (xhr.status === 200) {
+                const response = JSON.parse(xhr.responseText);
+                progressText.textContent = '上传完成';
+
+                if (response.code === 200) {
+                    const data = response.data;
+                    let resultHtml = '<div class="alert alert-success">' + data.message + '</div>';
+                    if (data.failMessages) {
+                        resultHtml += '<div class="alert alert-warning"><strong>失败详情：</strong>' + data.failMessages + '</div>';
+                    }
+                    importResult.innerHTML = resultHtml;
+
+                    setTimeout(function() {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    importResult.innerHTML = '<div class="alert alert-danger">' + response.message + '</div>';
+                }
+            } else {
+                progressText.textContent = '上传失败';
+                importResult.innerHTML = '<div class="alert alert-danger">上传失败，请稍后重试</div>';
+            }
+        });
+
+        xhr.addEventListener('error', function() {
+            progressText.textContent = '上传出错';
+            importResult.innerHTML = '<div class="alert alert-danger">网络错误，请稍后重试</div>';
+        });
+
+        xhr.open('POST', '/admin/course-selections/import');
+        xhr.send(formData);
+    }
+</script>
+</body>
+</html>

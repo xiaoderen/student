@@ -15,4 +15,5 @@ public interface StudentService {
     void deleteStudent(Long id);
     Map<String, Object> importStudentsFromExcel(MultipartFile file);
     Map<String, Long> getGenderStatistics();
+    List<Student> searchStudents(String studentId, String studentName);
 }

@@ -168,4 +168,28 @@ public class StudentServiceImpl implements StudentService {
 
         return statistics;
     }
+
+
+    @Override
+    public List<Student> searchStudents(String studentId, String studentName) {
+        boolean hasStudentId = studentId != null && !studentId.trim().isEmpty();
+        boolean hasStudentName = studentName != null && !studentName.trim().isEmpty();
+
+        if (!hasStudentId && !hasStudentName) {
+            return studentRepository.findAll();
+        }
+
+        String searchStudentId = hasStudentId ? studentId.trim() : "";
+        String searchStudentName = hasStudentName ? studentName.trim() : "";
+
+        if (hasStudentId && hasStudentName) {
+            return studentRepository.findByStudentIdContainingAndStudentNameContaining(
+                    searchStudentId, searchStudentName);
+        } else if (hasStudentId) {
+            return studentRepository.findByStudentIdContaining(searchStudentId);
+        } else {
+            return studentRepository.findByStudentNameContaining(searchStudentName);
+        }
+    }
 }
+

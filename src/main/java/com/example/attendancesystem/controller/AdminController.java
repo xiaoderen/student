@@ -1,17 +1,28 @@
 package com.example.attendancesystem.controller;
 
+import com.example.attendancesystem.entity.Attendance;
 import com.example.attendancesystem.entity.Student;
 import com.example.attendancesystem.entity.User;
+import com.example.attendancesystem.service.AttendanceService;
 import com.example.attendancesystem.service.CourseSelectionService;
 import com.example.attendancesystem.service.StudentService;
 import com.example.attendancesystem.util.Result;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpSession;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +35,9 @@ public class AdminController {
 
     @Autowired
     private CourseSelectionService courseSelectionService;
+
+    @Autowired
+    private AttendanceService attendanceService;
 
     @GetMapping("/dashboard")
     public String dashboard(HttpSession session, Model model) {
@@ -39,7 +53,9 @@ public class AdminController {
     }
 
     @GetMapping("/students")
-    public String listStudents(HttpSession session, Model model) {
+    public String listStudents(HttpSession session, Model model,
+                               @RequestParam(required = false) String studentId,
+                               @RequestParam(required = false) String studentName) {
         User user = (User) session.getAttribute("currentUser");
         if (user == null) {
             return "redirect:/login";
@@ -47,9 +63,68 @@ public class AdminController {
         if (user.getRole() != User.Role.TEACHER && user.getRole() != User.Role.ADMIN) {
             return "redirect:/admin/dashboard";
         }
-        List<Student> students = studentService.getAllStudents();
+
+        List<Student> students;
+        if ((studentId != null && !studentId.trim().isEmpty()) ||
+                (studentName != null && !studentName.trim().isEmpty())) {
+            students = studentService.searchStudents(studentId, studentName);
+            model.addAttribute("searchStudentId", studentId);
+            model.addAttribute("searchStudentName", studentName);
+        } else {
+            students = studentService.getAllStudents();
+        }
+
         model.addAttribute("students", students);
         return "admin/student-list";
+    }
+
+    @GetMapping("/attendance")
+    public String listAttendance(HttpSession session, Model model,
+                                 @RequestParam(required = false) String studentId,
+                                 @RequestParam(required = false) String courseId,
+                                 @RequestParam(required = false) String startDate,
+                                 @RequestParam(required = false) String endDate,
+                                 @RequestParam(defaultValue = "0") int page,
+                                 @RequestParam(defaultValue = "10") int size) {
+        User user = (User) session.getAttribute("currentUser");
+        if (user == null) {
+            return "redirect:/login";
+        }
+        if (user.getRole() != User.Role.TEACHER && user.getRole() != User.Role.ADMIN) {
+            return "redirect:/admin/dashboard";
+        }
+
+        LocalDateTime startTime = null;
+        LocalDateTime endTime = null;
+
+        if (startDate != null && !startDate.trim().isEmpty() &&
+                endDate != null && !endDate.trim().isEmpty()) {
+            try {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                LocalDate start = LocalDate.parse(startDate, formatter);
+                LocalDate end = LocalDate.parse(endDate, formatter);
+                startTime = start.atStartOfDay();
+                endTime = end.atTime(LocalTime.MAX);
+            } catch (Exception e) {
+                model.addAttribute("error", "日期格式错误");
+            }
+        }
+
+        Sort sort = Sort.by(Sort.Direction.DESC, "checkInTime");
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<Attendance> attendances = attendanceService.searchAttendances(
+                studentId, courseId, startTime, endTime, pageable);
+
+        model.addAttribute("attendances", attendances);
+        model.addAttribute("searchStudentId", studentId);
+        model.addAttribute("searchCourseId", courseId);
+        model.addAttribute("searchStartDate", startDate);
+        model.addAttribute("searchEndDate", endDate);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("pageSize", size);
+
+        return "admin/attendance-list";
     }
 
     @GetMapping("/students/add")

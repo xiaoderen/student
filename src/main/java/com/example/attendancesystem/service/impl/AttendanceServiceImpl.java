@@ -139,6 +139,45 @@ public class AttendanceServiceImpl implements AttendanceService {
         return attendanceRepository.findByStudentIdAndCheckInTimeBetween(studentId, startTime, endTime, pageable);
     }
 
+    @Override
+    public Page<Attendance> getAttendancesByCourseIdAndDateRange(String courseId, LocalDateTime startTime, LocalDateTime endTime, Pageable pageable) {
+        return attendanceRepository.findByCourseIdAndCheckInTimeBetween(courseId, startTime, endTime, pageable);
+    }
+
+    @Override
+    public List<Attendance> getAttendancesByCourseIdAndDateRange(String courseId, LocalDateTime startTime, LocalDateTime endTime) {
+        return attendanceRepository.findByCourseIdAndCheckInTimeBetween(courseId, startTime, endTime);
+    }
+
+    @Override
+    public Page<Attendance> searchAttendances(String studentId, String courseId, LocalDateTime startTime, LocalDateTime endTime, Pageable pageable) {
+        boolean hasStudentId = studentId != null && !studentId.trim().isEmpty();
+        boolean hasCourseId = courseId != null && !courseId.trim().isEmpty();
+        boolean hasDateRange = startTime != null && endTime != null;
+
+        if (hasStudentId && hasCourseId) {
+            if (hasDateRange) {
+                return attendanceRepository.findByStudentIdAndCourseId(studentId, courseId, pageable);
+            } else {
+                return attendanceRepository.findByStudentIdAndCourseId(studentId, courseId, pageable);
+            }
+        } else if (hasStudentId) {
+            if (hasDateRange) {
+                return attendanceRepository.findByStudentIdAndCheckInTimeBetween(studentId, startTime, endTime, pageable);
+            } else {
+                return attendanceRepository.findByStudentId(studentId, pageable);
+            }
+        } else if (hasCourseId) {
+            if (hasDateRange) {
+                return attendanceRepository.findByCourseIdAndCheckInTimeBetween(courseId, startTime, endTime, pageable);
+            } else {
+                return attendanceRepository.findByCourseId(courseId, pageable);
+            }
+        } else {
+            return attendanceRepository.findAll(pageable);
+        }
+    }
+
     public Pageable createPageable(int page, int size, String sortBy, String direction) {
         if (sortBy == null || sortBy.isEmpty()) {
             sortBy = DEFAULT_SORT_FIELD;

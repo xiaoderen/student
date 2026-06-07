@@ -28,4 +28,10 @@ public interface AttendanceService {
     boolean hasCheckedInToday(String studentId, String courseId);
 
     Page<Attendance> getAttendancesByStudentIdAndDateRange(String studentId, LocalDateTime startTime, LocalDateTime endTime, Pageable pageable);
+
+    Page<Attendance> getAttendancesByCourseIdAndDateRange(String courseId, LocalDateTime startTime, LocalDateTime endTime, Pageable pageable);
+
+    List<Attendance> getAttendancesByCourseIdAndDateRange(String courseId, LocalDateTime startTime, LocalDateTime endTime);
+
+    Page<Attendance> searchAttendances(String studentId, String courseId, LocalDateTime startTime, LocalDateTime endTime, Pageable pageable);
 }

@@ -77,7 +77,7 @@
     <div class="register-link">
         <a th:href="@{/register}">没有账号？去注册</a>
     </div>
-    <div class="error-message" th:if="${error}" th:text="${error}"></div>
+    <div class="error-message" th:if="${param.error}" th:text="'用户名或密码错误'"></div>
 </div>
 </body>
 </html>
